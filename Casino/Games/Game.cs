@@ -6,6 +6,11 @@ namespace Casino
     {
         public abstract void Play();
 
+        public void ChangeGame()
+        {
+
+        }
+
         public void Quit()
         {
             WriteLine(GlobalConstants.QUIT);

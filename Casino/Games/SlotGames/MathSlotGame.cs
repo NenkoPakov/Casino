@@ -8,9 +8,9 @@ namespace Casino.Games.SlotGames
     {
         private static SlotItem[] slotItems = new SlotItem[]
             {
-                new SlotItem('+',0.4m,45),
-                new SlotItem('-',0.6m,35),
-                new SlotItem('*',0m,20),
+                new SlotItem(GlobalConstants.SUM_SYMBOL,0.4m,45),
+                new SlotItem(GlobalConstants.SUBTRACT_SYMBOL,0.6m,35),
+                new SlotItem(GlobalConstants.WILDCARD_SYMBOL,0m,20),
             };
 
         public MathSlotGame(int rows, int cols)

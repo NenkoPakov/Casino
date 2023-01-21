@@ -1,35 +1,23 @@
-﻿using System.Reflection;
-using Casino.Attributes;
+﻿using Casino.Attributes;
 
 namespace Casino.Enums
 {
     public enum Actions
     {
-        [StringValue("Test1")]
+        [StringValue("Deposit money")]
         DepositMoney = 1,
-        [StringValue("Test2")]
+        [StringValue("Withdraw money")]
         WithdrawMoney = 2,
-        [StringValue("Test3")]
+        [StringValue("Change bet amount")]
         ChangeBetAmount = 3,
+        [StringValue("Spin the rotary")]
         Spin = 4,
+        [StringValue("Check balance")]
         CheckBalance = 5,
-        Quit = 6,
-    }
-
-    public static class EnumExtensions
-    {
-        public static string GetStringValue(this Enum value)
-        {
-            if (value == null)
-            {
-                return String.Empty;
-            }
-
-            Type type = value.GetType();
-            FieldInfo fieldInfo = type.GetField(value.ToString());
-            StringValueAttribute[] attribs = fieldInfo.GetCustomAttributes(
-                typeof(StringValueAttribute), false) as StringValueAttribute[];
-            return attribs.Length > 0 ? attribs[0].Value : String.Empty;
-        }
+        [StringValue("Change game")]
+        ChangeGame = 6,
+        [StringValue("Quit")]
+        Quit = 7,
+        Unknown = 0,
     }
 }

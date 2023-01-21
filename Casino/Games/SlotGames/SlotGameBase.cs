@@ -39,7 +39,7 @@ namespace Casino.Games.SlotGames
         {
             if (Transaction.Bet > Transaction.Balance)
             {
-                WriteLine(GlobalConstants.INSUFFICIENT_FUNDS + Transaction.Balance);
+                WriteLine($"{GlobalConstants.INSUFFICIENT_FUNDS} {Transaction.Balance}");
             }
             else
             {
@@ -52,19 +52,19 @@ namespace Casino.Games.SlotGames
 
         public void PrintResult()
         {
-            var sb = new StringBuilder();
+            var slotGameResult = new StringBuilder();
 
             for (int row = 0; row < _rows; row++)
             {
                 for (int col = 0; col < _cols; col++)
                 {
-                    sb.Append(_slot[row, col]);
+                    slotGameResult.Append(_slot[row, col]);
                 }
 
-                sb.AppendLine();
+                slotGameResult.AppendLine();
             }
 
-            WriteLine(sb.ToString());
+            WriteLine(slotGameResult.ToString());
         }
 
         public void CheckForWinnings()
@@ -76,15 +76,15 @@ namespace Casino.Games.SlotGames
                 .Select(col => _slot[row, col])
                 .ToArray();
 
-                var wildCards = rowItems.Count(x => x == '*');
-                var distinctSymbols = rowItems.Distinct().Where(i => i != '*');
-                var distinctSymbolsCount = rowItems.Distinct().Count();
+                var wildCardsCount = rowItems.Count(x => x == GlobalConstants.WILDCARD_SYMBOL);
+                var distinctSymbols = rowItems.Distinct().Where(i => i != GlobalConstants.WILDCARD_SYMBOL);
+                var distinctSymbolsCount = distinctSymbols.Count();
 
                 if (distinctSymbolsCount == 1)
                 {
                     var symbol = distinctSymbols.FirstOrDefault();
                     var coef = items.FirstOrDefault(i => i.Symbol == symbol)!.Coefficient;
-                    currentWinnings += (_cols - wildCards) * coef * Transaction.Bet;
+                    currentWinnings += (_cols - wildCardsCount) * coef * Transaction.Bet;
                 }
             }
 
@@ -92,14 +92,15 @@ namespace Casino.Games.SlotGames
             {
                 Transaction.Balance += currentWinnings;
                 _winnings += currentWinnings;
-                WriteLine(GlobalConstants.WIN_MESSAGE + currentWinnings);
+
+                WriteLine($"{GlobalConstants.WIN_MESSAGE} {currentWinnings}");
             }
             else
             {
                 WriteLine(GlobalConstants.TRY_AGAIN_MESSAGE);
             }
 
-            WriteLine(GlobalConstants.CHECK_BALANCE + Transaction.Balance);
+            WriteLine($"{GlobalConstants.CHECK_BALANCE} {Transaction.Balance}");
         }
 
         public void SpinSlot()

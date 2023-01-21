@@ -17,33 +17,47 @@
             }
 
             Balance += deposit;
-            WriteLine(GlobalConstants.DEPOSIT_MONEY_SUCCESSFUL + Balance);
+            WriteLine($"{GlobalConstants.DEPOSIT_MONEY_SUCCESSFUL} {Balance}");
         }
 
         public static void Withdraw()
         {
             WriteLine(GlobalConstants.WITHDRAW_MONEY);
-            decimal withdraw = decimal.Parse(ReadLine());
+            decimal withdraw;
+            bool isValid = decimal.TryParse(ReadLine(), out withdraw);
+
+            if (!isValid || withdraw < Balance)
+            {
+                throw new Exception(GlobalConstants.INVALID_WITHDRAWAL_AMOUNT);
+            }
+
             if (withdraw > Balance)
             {
-                WriteLine(GlobalConstants.INSUFFICIENT_FUNDS + Balance);
+                WriteLine($"{GlobalConstants.INSUFFICIENT_FUNDS} {Balance}");
             }
             else
             {
                 Balance -= withdraw;
-                WriteLine(GlobalConstants.WITHDRAWAL_SUCCESSFUL + Balance);
+                WriteLine($"{GlobalConstants.WITHDRAWAL_SUCCESSFUL} {Balance}");
             }
         }
 
         public static void ChangeBet()
         {
             WriteLine(GlobalConstants.CHANGE_BET_AMOUNT);
-            Bet = decimal.Parse(ReadLine());
-            WriteLine(GlobalConstants.CHANGE_BET_AMOUNT_SUCCESSFUL + Bet);
+
+            bool isValid = decimal.TryParse(ReadLine(), out Bet);
+
+            if (!isValid || Bet <= 0)
+            {
+                throw new Exception(GlobalConstants.INVALID_BET_AMOUNT);
+            }
+
+            WriteLine($"{GlobalConstants.CHANGE_BET_AMOUNT_SUCCESSFUL} {Bet}");
         }
         public static void CheckBalance()
         {
-            WriteLine(GlobalConstants.CHECK_BALANCE + Balance);
+            WriteLine($"{GlobalConstants.CHECK_BALANCE} {Balance}");
         }
     }
 }
