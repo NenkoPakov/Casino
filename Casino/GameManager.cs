@@ -142,6 +142,12 @@ namespace Casino
                     }
 
                     operations[selectedAction]();
+
+                    if (selectedAction == Actions.Spin && this._transactionService.Balance == 0)
+                    {
+                        choosenGame.Quit();
+                        return Actions.Quit;
+                    }
                 }
                 catch (Exception ex)
                 {
