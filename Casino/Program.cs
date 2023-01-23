@@ -1,9 +1,4 @@
-﻿global using static System.Console;
-
-using System.Text;
-using Casino.Enums;
-using Casino.Exceptions;
-using Casino.Games.Interfaces;
+﻿using Casino.Enums;
 using Casino.Services;
 using Casino.Wrappers;
 
@@ -16,6 +11,7 @@ namespace Casino
             ConsoleWrapper consoleWrapper = new ConsoleWrapper();
             TransactionService transactionService = new TransactionService(consoleWrapper);
             GameManager gameManager = new GameManager(transactionService, consoleWrapper);
+
             Actions selectedAction;
             do
             {
