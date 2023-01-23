@@ -1,17 +1,24 @@
 ﻿using Casino.Exceptions;
+using Casino.Wrappers;
 
 namespace Casino.Services
 {
     public class TransactionService : ITransactionService
     {
+        private readonly IConsole _console;
         public decimal Balance { get; private set; }
         public decimal Bet { get; private set; } = 0.1m;
 
+        public TransactionService(IConsole console)
+        {
+            this._console = console;
+        }
+
         public void Deposit()
         {
-            WriteLine(GlobalConstants.DEPOSIT_MONEY);
+            this._console.WriteLine(GlobalConstants.DEPOSIT_MONEY);
             decimal deposit;
-            bool isValid = decimal.TryParse(ReadLine(), out deposit);
+            bool isValid = decimal.TryParse(this._console.ReadLine(), out deposit);
 
             if (!isValid)
             {
@@ -24,14 +31,14 @@ namespace Casino.Services
             }
 
             this.Balance += deposit;
-            WriteLine($"{GlobalConstants.DEPOSIT_MONEY_SUCCESSFUL} {this.Balance}");
+            this._console.WriteLine($"{GlobalConstants.DEPOSIT_MONEY_SUCCESSFUL} {this.Balance}");
         }
 
         public void Withdraw()
         {
-            WriteLine(GlobalConstants.WITHDRAW_MONEY);
+            this._console.WriteLine(GlobalConstants.WITHDRAW_MONEY);
             decimal withdraw;
-            bool isValid = decimal.TryParse(ReadLine(), out withdraw);
+            bool isValid = decimal.TryParse(this._console.ReadLine(), out withdraw);
 
             if (!isValid)
             {
@@ -50,16 +57,16 @@ namespace Casino.Services
             else
             {
                 this.Balance -= withdraw;
-                WriteLine($"{GlobalConstants.WITHDRAWAL_SUCCESSFUL} {this.Balance}");
+                this._console.WriteLine($"{GlobalConstants.WITHDRAWAL_SUCCESSFUL} {this.Balance}");
             }
         }
 
         public void ChangeBet()
         {
-            WriteLine(GlobalConstants.CHANGE_BET_AMOUNT);
+            this._console.WriteLine(GlobalConstants.CHANGE_BET_AMOUNT);
 
             decimal newBet;
-            bool isValid = decimal.TryParse(ReadLine(), out newBet);
+            bool isValid = decimal.TryParse(this._console.ReadLine(), out newBet);
 
             if (!isValid)
             {
@@ -73,12 +80,12 @@ namespace Casino.Services
 
             Bet = newBet;
 
-            WriteLine($"{GlobalConstants.CHANGE_BET_AMOUNT_SUCCESSFUL} {this.Bet}");
+            this._console.WriteLine($"{GlobalConstants.CHANGE_BET_AMOUNT_SUCCESSFUL} {this.Bet}");
         }
 
         public void CheckBalance()
         {
-            WriteLine($"{GlobalConstants.CHECK_BALANCE} {this.Balance}");
+            this._console.WriteLine($"{GlobalConstants.CHECK_BALANCE} {this.Balance}");
         }
 
         public void ReduceBalanceByBetAmount()

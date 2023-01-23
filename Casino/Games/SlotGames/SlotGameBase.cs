@@ -1,12 +1,13 @@
 ﻿using System.Text;
-using Casino.Games.Interfaces;
 using Casino.Models;
 using Casino.Services;
+using Casino.Wrappers;
 
 namespace Casino.Games.SlotGames
 {
     public abstract class SlotGameBase : Game
     {
+        private readonly IConsole _console;
         private readonly int _rows;
         private readonly int _cols;
         private readonly SlotItem[] _items;
@@ -16,13 +17,15 @@ namespace Casino.Games.SlotGames
         private readonly TransactionService _transactionService;
         private decimal _winnings;
 
-        protected SlotGameBase(int rows, int cols, SlotItem[] items, Random numberGenerator, TransactionService transactionService)
+        protected SlotGameBase(int rows, int cols, SlotItem[] items, Random numberGenerator, TransactionService transactionService, IConsole console)
+            : base(console)
         {
             this._rows = rows;
             this._cols = cols;
             this._items = items;
             this._numberGenerator = numberGenerator;
             this._transactionService = transactionService;
+            this._console = console;
 
             this._slot = new char[this._rows][];
             for (int row = 0; row < this._rows; row++)
@@ -46,7 +49,7 @@ namespace Casino.Games.SlotGames
         {
             if (_transactionService.Bet > _transactionService.Balance)
             {
-                WriteLine($"{GlobalConstants.INSUFFICIENT_FUNDS} {_transactionService.Balance}");
+                this._console.WriteLine($"{GlobalConstants.INSUFFICIENT_FUNDS} {_transactionService.Balance}");
             }
             else
             {
@@ -72,7 +75,7 @@ namespace Casino.Games.SlotGames
                 slotGameResult.AppendLine();
             }
 
-            WriteLine(slotGameResult.ToString());
+            this._console.WriteLine(slotGameResult.ToString());
         }
 
         private void CheckForWinnings(char[][] slot)
@@ -99,14 +102,14 @@ namespace Casino.Games.SlotGames
                 this._transactionService.AddWinnings(currentWinnings);
                 this._winnings += currentWinnings;
 
-                WriteLine($"{GlobalConstants.WIN_MESSAGE} {currentWinnings}");
+                this._console.WriteLine($"{GlobalConstants.WIN_MESSAGE} {currentWinnings}");
             }
             else
             {
-                WriteLine(GlobalConstants.TRY_AGAIN_MESSAGE);
+                this._console.WriteLine(GlobalConstants.TRY_AGAIN_MESSAGE);
             }
 
-            WriteLine($"{GlobalConstants.CHECK_BALANCE} {this._transactionService.Balance}");
+            this._console.WriteLine($"{GlobalConstants.CHECK_BALANCE} {this._transactionService.Balance}");
         }
 
         private void SpinSlot(char[][] slot)

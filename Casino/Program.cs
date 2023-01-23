@@ -5,6 +5,7 @@ using Casino.Enums;
 using Casino.Exceptions;
 using Casino.Games.Interfaces;
 using Casino.Services;
+using Casino.Wrappers;
 
 namespace Casino
 {
@@ -12,8 +13,9 @@ namespace Casino
     {
         public static void Main(string[] args)
         {
-            TransactionService transactionService = new TransactionService();
-            GameManager gameManager = new GameManager(transactionService);
+            ConsoleWrapper consoleWrapper = new ConsoleWrapper();
+            TransactionService transactionService = new TransactionService(consoleWrapper);
+            GameManager gameManager = new GameManager(transactionService, consoleWrapper);
             Actions selectedAction;
             do
             {

@@ -1,6 +1,6 @@
 ﻿namespace Casino.Exceptions
 {
-    class InvalidAmountException : Exception
+    public class InvalidAmountException : Exception
     {
         public InvalidAmountException(string message = GlobalConstants.INVALID_AMOUNT)
                : base(message)
