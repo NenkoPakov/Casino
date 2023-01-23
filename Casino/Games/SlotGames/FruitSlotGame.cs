@@ -1,5 +1,6 @@
 ﻿using Casino.Attributes;
 using Casino.Models;
+using Casino.Services;
 
 namespace Casino.Games.SlotGames
 {
@@ -14,8 +15,8 @@ namespace Casino.Games.SlotGames
                 new SlotItem(GlobalConstants.WILDCARD_SYMBOL,0m,5),
             };
 
-        public FruitSlotGame(int rows, int cols)
-            : base(rows, cols, slotItems)
+        public FruitSlotGame(int rows, int cols, Random numberGenerator, TransactionService transactionService)
+            : base(rows, cols, slotItems, numberGenerator, transactionService)
         {
         }
 

@@ -1,8 +1,6 @@
-﻿using System.Runtime.Serialization;
-
-namespace Casino
+﻿namespace Casino
 {
-    public sealed class GlobalConstants
+    internal static class GlobalConstants
     {
         #region Successful messages
         internal const string DEPOSIT_MONEY_SUCCESSFUL = "Deposit successful. Your new balance is:";
@@ -38,7 +36,7 @@ namespace Casino
         internal const string GAME_WELCOME_MESSAGE = "Welcome to";
         internal const string CASINO_WELCOME_MESSAGE = "Welcome to the Casino!";
         internal const string SELECT_GAME_MESSAGE = "Please select a game:";
-        internal const string NOT_FOUND_GAME_MESSAGE = "No game found";
+        internal const string NOT_FOUND_GAME_MESSAGE = "No games found";
         #endregion
 
         #region Symbols

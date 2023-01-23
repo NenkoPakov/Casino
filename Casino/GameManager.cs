@@ -1,87 +1,52 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using Casino.Attributes;
 using Casino.Enums;
+using Casino.Exceptions;
 using Casino.Extensions;
 using Casino.Games.Interfaces;
+using Casino.Services;
 
 namespace Casino
 {
-    public static class GameManager
+    public class GameManager
     {
-        internal static Actions ChooseAction()
+        private readonly Random _numberGenerator = new Random();
+        private readonly TransactionService _transactionService;
+
+        public GameManager(TransactionService transactionService)
         {
-            string? input = ReadLine();
-
-            int choice;
-            bool isValid = int.TryParse(input, out choice);
-            var isDefined = Enum.IsDefined(typeof(Actions), choice);
-            if (!isValid || !isDefined)
-            {
-                throw new Exception(GlobalConstants.INVALID_ACTION);
-            }
-
-            return (Actions)choice;
+            this._transactionService = transactionService;
         }
 
-        internal static void GreetThePlayer(ISlotGame choosenGame, StringBuilder actionsMenu)
+        public Actions BeginPlay(string[] args, TransactionService transactionService)
         {
-            WriteLine($"{GlobalConstants.GAME_WELCOME_MESSAGE} {choosenGame.GetType().Name}");
-            WriteLine(new string('-', 10));
-            WriteLine($"{GlobalConstants.CURRENT_BET_AMOUNT} {Transaction.Bet}");
-            WriteLine(new string('-', 10));
-            WriteLine(actionsMenu);
-        }
-
-        internal static StringBuilder GetActionsMenu()
-        {
-            var actionsMenu = new StringBuilder();
-
-            foreach (var action in Enum.GetValues<Actions>())
+            try
             {
-                if (!string.IsNullOrEmpty(action.GetStringValue()))
+                ICollection<Type> games = GetAllSlotGames();
+
+                IGame? choosenGame = ChooseGame(args, games);
+
+                Dictionary<Actions, Action> operations = new Dictionary<Actions, Action>()
                 {
-                    actionsMenu.AppendLine($"{(int)action}. {action.GetStringValue()}");
-                }
-            }
+                    { Actions.DepositMoney,transactionService.Deposit},
+                    { Actions.WithdrawMoney,transactionService.Withdraw},
+                    { Actions.ChangeBetAmount,transactionService.ChangeBet},
+                    { Actions.Spin,choosenGame.Play},
+                    { Actions.CheckBalance, transactionService.CheckBalance},
+                };
 
-            return actionsMenu;
+                StringBuilder actionsMenu = GetActionsMenu();
+                return PlayProcess(choosenGame, operations, actionsMenu);
+            }
+            catch (Exception ex)
+            {
+                WriteLine(ex.Message);
+                return Actions.Unknown;
+            }
         }
 
-        internal static ISlotGame ChooseGame(string[] args, ICollection<Type> games)
-        {
-            WriteLine(GlobalConstants.CASINO_WELCOME_MESSAGE);
-            WriteLine(GlobalConstants.SELECT_GAME_MESSAGE);
-            for (int game = 0; game < games.Count; game++)
-            {
-                WriteLine($"{game + 1}. {games.ElementAt(game).Name}");
-            }
-
-            int selectedGame;
-            var isValid = int.TryParse(ReadLine(), out selectedGame);
-
-            if (!isValid)
-            {
-                throw new Exception(GlobalConstants.INVALID_INPUT);
-            }
-
-            var choosenGameType = games.ElementAt(selectedGame - 1);
-
-            if (choosenGameType == null)
-            {
-                throw new Exception(GlobalConstants.INVALID_GAME);
-            }
-
-            ISlotGame? choosenGame = Activator.CreateInstance(choosenGameType, args.Length > 0 ? args : new object[] { 4, 3 }) as ISlotGame;
-
-            return choosenGame!;
-        }
-
-        internal static ICollection<Type> GetAllSlotGames()
+        private ICollection<Type> GetAllSlotGames()
         {
             ICollection<Type> games = new List<Type>();
 
@@ -97,10 +62,117 @@ namespace Casino
 
             if (games.Count == 0)
             {
-                throw new Exception(GlobalConstants.NOT_FOUND_GAME_MESSAGE);
+                throw new ArgumentException(GlobalConstants.NOT_FOUND_GAME_MESSAGE);
             }
 
             return games;
+        }
+
+        private IGame ChooseGame(string[] args, ICollection<Type> games)
+        {
+            WriteLine(GlobalConstants.CASINO_WELCOME_MESSAGE);
+            WriteLine(GlobalConstants.SELECT_GAME_MESSAGE);
+            for (int game = 0; game < games.Count; game++)
+            {
+                WriteLine($"{game + 1}. {games.ElementAt(game).Name}");
+            }
+
+            int selectedGame;
+            bool isValid = int.TryParse(ReadLine(), out selectedGame);
+
+            if (!isValid)
+            {
+                throw new InvalidInputException();
+            }
+
+            Type choosenGameType = games.ElementAt(selectedGame - 1);
+
+            if (choosenGameType == null)
+            {
+                throw new InvalidInputException(GlobalConstants.INVALID_GAME, selectedGame);
+            }
+
+            int rows = args.Length == 0 ? 4 : int.Parse(args[0]);
+            int cols = args.Length == 0 ? 3 : int.Parse(args[1]);
+
+            IGame? choosenGame = Activator.CreateInstance(choosenGameType, rows, cols, this._numberGenerator, _transactionService) as IGame;
+
+            return choosenGame!;
+        }
+
+        private StringBuilder GetActionsMenu()
+        {
+            StringBuilder actionsMenu = new StringBuilder();
+
+            foreach (Actions action in Enum.GetValues<Actions>())
+            {
+                if (!string.IsNullOrEmpty(action.GetStringValue()))
+                {
+                    actionsMenu.AppendLine($"{(int)action}. {action.GetStringValue()}");
+                }
+            }
+
+            return actionsMenu;
+        }
+
+        private Actions PlayProcess(IGame choosenGame, Dictionary<Actions, Action> operations, StringBuilder actionsMenu)
+        {
+            while (true)
+            {
+                try
+                {
+                    GreetThePlayer(choosenGame, actionsMenu);
+
+                    Actions selectedAction = ChooseAction();
+                    if (selectedAction == Actions.Quit || selectedAction == Actions.ChangeGame)
+                    {
+                        choosenGame.Quit();
+                        return selectedAction;
+                    }
+
+                    if (!operations.ContainsKey(selectedAction))
+                    {
+                        throw new InvalidInputException(GlobalConstants.INVALID_ACTION);
+                    }
+
+                    operations[selectedAction]();
+                }
+                catch (Exception ex)
+                {
+                    WriteLine(ex.Message);
+                }
+            }
+        }
+
+        private void GreetThePlayer(IGame choosenGame, StringBuilder actionsMenu)
+        {
+            WriteLine($"{GlobalConstants.GAME_WELCOME_MESSAGE} {choosenGame.GetType().Name}");
+            WriteLine(new string('-', 10));
+            WriteLine($"{GlobalConstants.CURRENT_BET_AMOUNT} {_transactionService.Bet}");
+            WriteLine(new string('-', 10));
+            WriteLine(actionsMenu);
+        }
+
+        private Actions ChooseAction()
+        {
+            string? input = ReadLine();
+
+            int action;
+            bool isValid = int.TryParse(input, out action);
+
+            if (!isValid)
+            {
+                throw new InvalidInputException();
+            }
+
+            bool isDefined = Enum.IsDefined(typeof(Actions), action);
+
+            if (!isDefined)
+            {
+                throw new InvalidInputException(GlobalConstants.INVALID_ACTION, action);
+            }
+
+            return (Actions)action;
         }
     }
 }

@@ -1,64 +1,72 @@
 ﻿using System.Text;
 using Casino.Games.Interfaces;
 using Casino.Models;
+using Casino.Services;
 
 namespace Casino.Games.SlotGames
 {
-    public abstract class SlotGameBase : Game, ISlotGame
+    public abstract class SlotGameBase : Game
     {
-        private int _rows;
-        private int _cols;
-        private SlotItem[] items;
-        private Dictionary<char, int> auxiliary;
-        private char[,] _slot;
-        private Random _random;
+        private readonly int _rows;
+        private readonly int _cols;
+        private readonly SlotItem[] _items;
+        private readonly Dictionary<char, int> _auxiliary;
+        private readonly char[][] _slot;
+        private readonly Random _numberGenerator;
+        private readonly TransactionService _transactionService;
         private decimal _winnings;
 
-        public SlotGameBase(int rows, int cols, SlotItem[] items)
+        protected SlotGameBase(int rows, int cols, SlotItem[] items, Random numberGenerator, TransactionService transactionService)
         {
-            _rows = rows;
-            _cols = cols;
-            this.items = items;
+            this._rows = rows;
+            this._cols = cols;
+            this._items = items;
+            this._numberGenerator = numberGenerator;
+            this._transactionService = transactionService;
 
-            _slot = new char[rows, cols];
-
-            auxiliary = new Dictionary<char, int>();
-            var threshold = 0;
-            foreach (var item in items)
+            this._slot = new char[this._rows][];
+            for (int row = 0; row < this._rows; row++)
             {
-                var symbol = item.Symbol;
-                threshold += item.Probability;
-
-                auxiliary.Add(symbol, threshold);
+                this._slot[row] = new char[this._cols];
             }
 
-            _random = new Random();
+            this._auxiliary = new Dictionary<char, int>();
+
+            int threshold = 0;
+            foreach (SlotItem item in items)
+            {
+                char symbol = item.Symbol;
+                threshold += item.Probability;
+
+                this._auxiliary.Add(symbol, threshold);
+            }
         }
 
         public override void Play()
         {
-            if (Transaction.Bet > Transaction.Balance)
+            if (_transactionService.Bet > _transactionService.Balance)
             {
-                WriteLine($"{GlobalConstants.INSUFFICIENT_FUNDS} {Transaction.Balance}");
+                WriteLine($"{GlobalConstants.INSUFFICIENT_FUNDS} {_transactionService.Balance}");
             }
             else
             {
-                Transaction.Balance -= Transaction.Bet;
-                SpinSlot();
-                PrintResult();
-                CheckForWinnings();
+                _transactionService.ReduceBalanceByBetAmount();
+                SpinSlot(this._slot);
+                PrintResult(this._slot);
+                CheckForWinnings(this._slot);
             }
         }
 
-        public void PrintResult()
-        {
-            var slotGameResult = new StringBuilder();
 
-            for (int row = 0; row < _rows; row++)
+        private void PrintResult(char[][] slot)
+        {
+            StringBuilder slotGameResult = new StringBuilder();
+
+            for (int row = 0; row < this._rows; row++)
             {
-                for (int col = 0; col < _cols; col++)
+                for (int col = 0; col < this._cols; col++)
                 {
-                    slotGameResult.Append(_slot[row, col]);
+                    slotGameResult.Append(slot[row][col]);
                 }
 
                 slotGameResult.AppendLine();
@@ -67,31 +75,29 @@ namespace Casino.Games.SlotGames
             WriteLine(slotGameResult.ToString());
         }
 
-        public void CheckForWinnings()
+        private void CheckForWinnings(char[][] slot)
         {
             decimal currentWinnings = 0;
-            for (int row = 0; row < _rows; row++)
+            for (int row = 0; row < this._rows; row++)
             {
-                var rowItems = Enumerable.Range(0, _cols)
-                .Select(col => _slot[row, col])
-                .ToArray();
+                char[] rowItems = slot[row];
 
-                var wildCardsCount = rowItems.Count(x => x == GlobalConstants.WILDCARD_SYMBOL);
-                var distinctSymbols = rowItems.Distinct().Where(i => i != GlobalConstants.WILDCARD_SYMBOL);
-                var distinctSymbolsCount = distinctSymbols.Count();
+                int wildCardsCount = rowItems.Count(x => x == GlobalConstants.WILDCARD_SYMBOL);
+                IEnumerable<char> distinctSymbols = rowItems.Distinct().Where(i => i != GlobalConstants.WILDCARD_SYMBOL);
+                int distinctSymbolsCount = distinctSymbols.Count();
 
                 if (distinctSymbolsCount == 1)
                 {
-                    var symbol = distinctSymbols.FirstOrDefault();
-                    var coef = items.FirstOrDefault(i => i.Symbol == symbol)!.Coefficient;
-                    currentWinnings += (_cols - wildCardsCount) * coef * Transaction.Bet;
+                    char symbol = distinctSymbols.FirstOrDefault();
+                    decimal coefficient = _items.FirstOrDefault(i => i.Symbol == symbol)!.Coefficient;
+                    currentWinnings += (this._cols - wildCardsCount) * coefficient * this._transactionService.Bet;
                 }
             }
 
             if (currentWinnings > 0)
             {
-                Transaction.Balance += currentWinnings;
-                _winnings += currentWinnings;
+                this._transactionService.AddWinnings(currentWinnings);
+                this._winnings += currentWinnings;
 
                 WriteLine($"{GlobalConstants.WIN_MESSAGE} {currentWinnings}");
             }
@@ -100,22 +106,22 @@ namespace Casino.Games.SlotGames
                 WriteLine(GlobalConstants.TRY_AGAIN_MESSAGE);
             }
 
-            WriteLine($"{GlobalConstants.CHECK_BALANCE} {Transaction.Balance}");
+            WriteLine($"{GlobalConstants.CHECK_BALANCE} {this._transactionService.Balance}");
         }
 
-        public void SpinSlot()
+        private void SpinSlot(char[][] slot)
         {
-            for (int row = 0; row < _rows; row++)
+            for (int row = 0; row < this._rows; row++)
             {
-                for (int col = 0; col < _cols; col++)
+                for (int col = 0; col < this._cols; col++)
                 {
-                    var currentNumber = _random.Next(1, 101);
+                    int currentNumber = this._numberGenerator.Next(1, 101);
 
-                    foreach (var (symbol, threshold) in auxiliary)
+                    foreach (var (symbol, threshold) in this._auxiliary)
                     {
                         if (currentNumber < threshold)
                         {
-                            _slot[row, col] = symbol;
+                            slot[row][col] = symbol;
                             break;
                         }
                     }
