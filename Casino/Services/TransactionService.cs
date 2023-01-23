@@ -5,9 +5,9 @@ namespace Casino.Services
 {
     public class TransactionService : ITransactionService
     {
-        private readonly IConsole _console;
         public decimal Balance { get; private set; }
         public decimal Bet { get; private set; } = 0.1m;
+        private readonly IConsole _console;
 
         public TransactionService(IConsole console)
         {

@@ -73,15 +73,15 @@ namespace Casino
 
         private IGame ChooseGame(string[] args, ICollection<Type> games)
         {
-            _console.WriteLine(GlobalConstants.CASINO_WELCOME_MESSAGE);
-            _console.WriteLine(GlobalConstants.SELECT_GAME_MESSAGE);
+            this._console.WriteLine(GlobalConstants.CASINO_WELCOME_MESSAGE);
+            this._console.WriteLine(GlobalConstants.SELECT_GAME_MESSAGE);
             for (int game = 0; game < games.Count; game++)
             {
-                _console.WriteLine($"{game + 1}. {games.ElementAt(game).Name}");
+                this._console.WriteLine($"{game + 1}. {games.ElementAt(game).Name}");
             }
 
             int selectedGame;
-            bool isValid = int.TryParse(_console.ReadLine(), out selectedGame);
+            bool isValid = int.TryParse(this._console.ReadLine(), out selectedGame);
 
             if (!isValid)
             {
@@ -95,10 +95,13 @@ namespace Casino
                 throw new InvalidInputException(GlobalConstants.INVALID_GAME, selectedGame);
             }
 
-            int rows = args.Length == 0 ? 4 : int.Parse(args[0]);
-            int cols = args.Length == 0 ? 3 : int.Parse(args[1]);
+            int defaultRows = 4;
+            int defaultCols = 3;
 
-            IGame? choosenGame = Activator.CreateInstance(choosenGameType, rows, cols, this._numberGenerator, this._transactionService,_console) as IGame;
+            int rows = args.Length == 0 ? defaultRows : int.Parse(args[0]);
+            int cols = args.Length == 0 ? defaultCols : int.Parse(args[1]);
+
+            IGame? choosenGame = Activator.CreateInstance(choosenGameType, rows, cols, this._numberGenerator, this._transactionService, this._console) as IGame;
 
             return choosenGame!;
         }
